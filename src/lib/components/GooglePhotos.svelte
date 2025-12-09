@@ -1,6 +1,5 @@
 <script lang="ts">
   import {locationStore} from "@/lib/stores/location";
-  import {portal} from './Portal.svelte'
   import LoopsController from "@/lib/components/LoopsController.svelte";
   import {logoData} from "@/lib/misc/app-icon";
   import {setupStore} from "@/lib/stores/core";
@@ -11,11 +10,10 @@
   import type {Id} from "tinybase";
   import ActiveLoop from "@/lib/components/ActiveLoop.svelte";
   import JumpBack from "@/lib/components/JumpBack.svelte";
-  import type { ComponentType } from 'svelte';
   import type {MediaProvider} from "@/lib/providers";
-  import {youtubeProvider} from "@/lib/providers";
+  import {googlePhotosProvider} from "@/lib/providers";
 
-  let {provider = youtubeProvider}: {provider?: MediaProvider} = $props()
+  let {provider = googlePhotosProvider}: {provider?: MediaProvider} = $props()
   let currentLocation = $state(location.href)
 
   $effect(() => {
@@ -36,10 +34,9 @@
 
   setTinyContext(ctx)
 
-  let videoId = $derived(provider.idFromUrl(currentLocation))
-  let sourceId = $derived(videoId ? provider.sourceIdFromMediaId(videoId) : null) as string | null
+  let mediaId = $derived(provider.idFromUrl(currentLocation))
+  let sourceId = $derived(mediaId ? provider.sourceIdFromMediaId(mediaId) : null) as string | null
 
-  // need to use in this format so it clears the loop when the video changes
   let activeLoop = $state(null) as Id | null;
   let popupVisible = $state(false) as boolean;
 
@@ -52,6 +49,7 @@
   let activeComponent: ActiveLoop | undefined = $state()
   let controllerComponent: LoopsController | undefined = $state()
   let jumpBackComponent: JumpBack | undefined = $state();
+  let progressTarget = $derived(() => document.querySelector('video')?.parentElement || document.body)
 
   function log(event: string, details?: {[key: string]: any}) {
     amplitude.track(event, {sourceId, ...details})
@@ -144,7 +142,6 @@
       }
     }
   }
-
 </script>
 
 <svelte:head>
@@ -155,17 +152,18 @@
 
 {#await ctx.ready then x}
   {#if sourceId}
-    <button class="ytp-button" use:portal={{target: ".ytp-right-controls", position: 'start'}} onclick={toggleVisible}>
+    <button class="ml-button" onclick={toggleVisible}>
       <div class="button-inner-container">
-        <img src={logoData} alt="Youtube Looper" />
+        <img src={logoData} alt="Media Looper" />
       </div>
     </button>
 
     {#if activeLoop}
-      <ActiveLoop id={activeLoop} bind:this={activeComponent}/>
+      <ActiveLoop id={activeLoop} bind:this={activeComponent} {progressTarget}/>
     {/if}
 
-      <div class="ytp-popup ytp-settings-menu ml-popup" use:portal={{target: ".html5-video-player"}} style="display: {popupVisible ? 'block' : 'none'}">
+    {#if popupVisible}
+      <div class="ml-popup">
         <LoopsController
             {sourceId}
             {activeLoop}
@@ -175,32 +173,48 @@
         />
         <JumpBack bind:this={jumpBackComponent} />
       </div>
+    {/if}
   {/if}
 {/await}
 
 <style>
+  .ml-button {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 999999;
+      padding: 0;
+      cursor: pointer;
+  }
 
-    img {
-        display: block;
-        width: 32px;
-    }
+  .button-inner-container {
+      width: 100%;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+  }
 
-    .ytp-button {
-        float: left;
-    }
+  .ml-button img {
+      display: block;
+      width: 28px;
+  }
 
-    .button-inner-container {
-        width: 100%;
-        height: 100%;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .ml-popup {
-        display: block;
-        height: calc(100% - 72px);
-        top: 8px;
-        overflow: hidden;
-    }
-
+  .ml-popup {
+      position: fixed;
+      right: 16px;
+      bottom: 72px;
+      width: 500px;
+      max-height: 80vh;
+      background: rgba(24,24,27,0.98);
+      color: white;
+      z-index: 999999;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
 </style>

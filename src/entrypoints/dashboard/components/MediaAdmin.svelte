@@ -10,7 +10,8 @@
   let {id}: {id: string} = $props()
 
   let showDeleteModal = $state(false)
-  let videoId = $derived(id.substring(8))
+  let isYoutube = $derived(id.startsWith('youtube:'))
+  let videoId = $derived(isYoutube ? id.substring(8) : '')
 
   const store = getTinyContextForce('store')
   const queries = getTinyContextForce('queries')
@@ -33,9 +34,15 @@
 
 <TableBodyRow on:click>
   <TableBodyCell class="min-w-[120px]">
-    <A href="https://www.youtube.com/watch?v={videoId}" target="_blank" on:click={sp}>
-      <img src={getThumbUrl(videoId, 'default')} alt="{$media.title}" />
-    </A>
+    {#if isYoutube}
+      <A href="https://www.youtube.com/watch?v={videoId}" target="_blank" on:click={sp}>
+        <img src={getThumbUrl(videoId, 'default')} alt="{$media.title}" />
+      </A>
+    {:else}
+      <div class="placeholder" aria-label={$media.title} title={$media.title}>
+        {$media.title}
+      </div>
+    {/if}
   </TableBodyCell>
   <TableBodyCell>{$media.channel}</TableBodyCell>
   <TableBodyCell>{$media.title}</TableBodyCell>
@@ -53,3 +60,20 @@
     <Button color="alternative">No, cancel</Button>
   </div>
 </Modal>
+
+<style>
+    .placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 90px;
+        background: #111827;
+        color: #e5e7eb;
+        padding: 8px;
+        text-align: center;
+        border-radius: 8px;
+        font-size: 12px;
+        box-sizing: border-box;
+    }
+</style>

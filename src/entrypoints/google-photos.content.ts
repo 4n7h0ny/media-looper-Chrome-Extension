@@ -1,11 +1,11 @@
-import Youtube from "@/lib/components/Youtube.svelte";
+import GooglePhotos from "@/lib/components/GooglePhotos.svelte";
 import * as amplitude from '@amplitude/analytics-browser';
 import {mount} from "svelte";
-import {youtubeProvider} from "@/lib/providers";
+import {googlePhotosProvider} from "@/lib/providers";
 
 export default defineContentScript({
   allFrames: true,
-  matches: ["*://*.youtube.com/*"],
+  matches: ["*://photos.google.com/*"],
   main() {
     const appVersion = browser?.runtime?.getManifest()?.version || "0.0.0-dev"
 
@@ -14,9 +14,9 @@ export default defineContentScript({
       autocapture: false
     });
 
-    mount(Youtube, {
+    mount(GooglePhotos, {
       target: document.body,
-      props: {provider: youtubeProvider}
+      props: {provider: googlePhotosProvider}
     })
   }
 });

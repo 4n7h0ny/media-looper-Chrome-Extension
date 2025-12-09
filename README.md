@@ -1,6 +1,6 @@
-# YouTube Looper
+# Media Looper
 
-This repository contains the source code for the YouTube looper extension.
+This repository contains the source code for the Media Looper extension, which works on YouTube and Google Photos.
 
 ## Install
 

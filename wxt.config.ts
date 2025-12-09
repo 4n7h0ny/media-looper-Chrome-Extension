@@ -7,13 +7,13 @@ export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-svelte'],
   manifest: {
-    name: "YouTube Looper",
-    description: "Custom loops extension for Youtube videos",
+    name: "Media Looper",
+    description: "Custom loops extension for Youtube and Google Photos videos",
     permissions: ["storage"],
     web_accessible_resources: [
       {
         resources: ["dashboard.html"],
-        matches: ["*://*.youtube.com/*"]
+        matches: ["*://*.youtube.com/*", "*://photos.google.com/*"]
       }
     ]
   },

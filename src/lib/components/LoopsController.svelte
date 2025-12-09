@@ -10,7 +10,8 @@
   import {secondsFromTime} from "@/lib/helpers/time";
   import type {Loop} from "@/lib/model";
   import * as amplitude from '@amplitude/analytics-browser';
-  import {sourceInfo, videoChapters, videoIdFromSourceId} from "@/lib/youtube/ui";
+  import {youtubeProvider} from "@/lib/providers";
+  import type {MediaProvider} from "@/lib/providers";
   import {channelSender, runtimeOnMessageSender} from "@/lib/misc/browser-network";
   import ConnectionStatusIndicator from "@/lib/components/ConnectionStatusIndicator.svelte";
   import {nanoid} from "nanoid";
@@ -19,10 +20,11 @@
 
   const dashboardUrl = browser.runtime.getURL('/dashboard.html')
 
-  let {sourceId, activeLoop = null, onselect}: {
+  let {sourceId, activeLoop = null, onselect, provider = youtubeProvider}: {
     sourceId: string,
     activeLoop: Id | null,
-    onselect: (e: any) => void
+    onselect: (e: any) => void,
+    provider?: MediaProvider
   } = $props()
 
   let recorderComponent: Recorder
@@ -35,7 +37,7 @@
 
   function ensureMediaInfo() {
     if (!store.getCell('medias', sourceId, 'title')) {
-      const info = sourceInfo()
+      const info = provider.sourceInfo()
 
       if (info) store.setPartialRow('medias', sourceId, info)
     }
@@ -44,7 +46,7 @@
   $effect(() => {
     sourceId
 
-    const chapters = videoChapters(video)
+    const chapters = provider.videoChapters?.(video) || []
     const groups = partition(chapters, 2, 1)
     const loops = groups.map(([a, b]) => {
       return {
@@ -149,17 +151,21 @@
   $effect(() => {
     const sender = channelSender(runtimeOnMessageSender, 'embed-media-info')
 
-    sender({sourceId, ...sourceInfo() || {}})
+    sender({sourceId, ...provider.sourceInfo() || {}})
   })
 
   // automatic import data from a previous version when available
   onMount(async () => {
-    const previousData = await browser.storage.sync.get(`"media-looper:youtube:${videoIdFromSourceId(sourceId)}"`)
+    const importKey = provider.previousImportKey?.(sourceId)
 
-    if (previousData) {
-      const sender = channelSender(runtimeOnMessageSender, 'import-from-previous')
+    if (importKey) {
+      const previousData = await browser.storage.sync.get(importKey)
 
-      sender({sourceId, info: sourceInfo(), edn: previousData})
+      if (previousData) {
+        const sender = channelSender(runtimeOnMessageSender, 'import-from-previous')
+
+        sender({sourceId, info: provider.sourceInfo(), edn: previousData})
+      }
     }
   })
 
