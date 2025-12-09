@@ -16,6 +16,7 @@
   const store = getTinyContextForce('store') as MergeableStore
 
   let media: string | false = $state(false)
+  let selectedMediaIsYoutube = $derived(typeof media === 'string' && media.startsWith('youtube:'))
   let search = $state("")
   let toImport: { [key: string]: any } | false = $state(false)
 
@@ -104,7 +105,11 @@
 
   <Modal bind:open={media} autoclose outsideclose dismissable={false} size={'xl'} classDialog="outline-0">
     {#if media}
-      <YoutubeEmbed videoId={media.substring(8)} />
+      {#if selectedMediaIsYoutube}
+        <YoutubeEmbed videoId={media.substring(8)} />
+      {:else}
+        <div class="p-4">Preview is only available for YouTube videos.</div>
+      {/if}
     {:else}
       <div>Something is wrong, no media selected.</div>
     {/if}

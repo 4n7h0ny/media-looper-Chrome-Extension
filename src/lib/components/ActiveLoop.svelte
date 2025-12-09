@@ -4,9 +4,10 @@
   import type {Id} from "tinybase";
   import type {Loop} from "@/lib/model";
 
-  let {video = document.querySelector("video"), id}: {
+  let {video = document.querySelector("video"), id, progressTarget = ".ytp-progress-bar"}: {
     video?: HTMLVideoElement | null,
-    id: Id
+    id: Id,
+    progressTarget?: string | HTMLElement
   } = $props()
 
   const store = getTinyContextForce('store')
@@ -19,6 +20,15 @@
 
   let left = $derived(loop.startTime / duration * 100)
   let width = $derived((loop.endTime - loop.startTime) / duration * 100)
+  let resolvedTarget: string | HTMLElement | null = document.body
+
+  $effect(() => {
+    if (typeof progressTarget === 'string') {
+      resolvedTarget = document.querySelector(progressTarget) || document.body
+    } else {
+      resolvedTarget = progressTarget || document.body
+    }
+  })
 
   function ticker() {
     if (!video) return
@@ -49,7 +59,7 @@
   }
 </script>
 
-<div class="bar" use:portal={{target: ".ytp-progress-bar"}} style:left={left + '%'} style:width={width + '%'}></div>
+<div class="bar" use:portal={{target: resolvedTarget}} style:left={left + '%'} style:width={width + '%'}></div>
 
 <style>
 
